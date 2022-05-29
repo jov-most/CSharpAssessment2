@@ -20,12 +20,53 @@ namespace HolmesglenStudentManagementSystem.DataAccessLayer
         // create
         public void Create(Subject subject)
         {
+            // challenge yourself
+            Connection.Open();
 
+            var command = Connection.CreateCommand();
+            command.CommandText = @"
+                INSERT INTO Subject
+                (SubjectID, FirstName, LastName, Email)
+                VALUES(@a, @b, @c, @d)
+            ";
+            command.Parameters.AddWithValue("a", subject.SubjectId);
+            command.Parameters.AddWithValue("b", subject.Title);
+            command.Parameters.AddWithValue("c", subject.NumberOfSession);
+            command.Parameters.AddWithValue("d", subject.HourPerSession);
+
+            // execute the query
+            command.ExecuteReader();
+
+            Connection.Close();
         }
 
         public Subject Read(string id)
         {
             Subject subject = null;
+            Connection.Open();
+
+            // build the query
+            var command = Connection.CreateCommand();
+            command.CommandText = @"
+                SELECT SubjectID, Title, NumberOfSession, HourPerSession
+                FROM Subject
+                WHERE SubjectID = @a
+            ";
+
+            command.Parameters.AddWithValue("a", id);
+
+            //execute the query
+            var reader = command.ExecuteReader();
+            if(reader.Read())
+            {
+                var subjectID = reader.GetString(0);
+                var title = reader.GetString(1);
+                var numberOfSession = Int32.Parse(reader.GetString(2));
+                var hourPerSession = Int32.Parse(reader.GetString(3));
+                subject = new Subject(subjectID, title, numberOfSession, hourPerSession);
+            }  //else student = null
+            
+            Connection.Close();
             
             return subject;
         }
@@ -66,12 +107,58 @@ namespace HolmesglenStudentManagementSystem.DataAccessLayer
 
         public void Update(Subject subject)
         {
-            
+            // open the connection
+            Connection.Open();
+
+            // get the data to put into the database (update)
+            var subjectID = subject.SubjectId;
+            var title = subject.Title;
+            var num_sessions = subject.NumberOfSession;
+            var hours_per_session = subject.HourPerSession;
+
+            // put the data into the database
+            var command = Connection.CreateCommand();
+            command.CommandText = @"
+                UPDATE Subject
+                SET SubjectID = @a,
+                    Title = @b,
+                    NumberOfSession = @c,
+                    HourPerSession = @d
+                WHERE SubjectID = @a
+                ";
+            command.Parameters.AddWithValue("a", subjectID);
+            command.Parameters.AddWithValue("b", title);
+            command.Parameters.AddWithValue("c", num_sessions);
+            command.Parameters.AddWithValue("d", hours_per_session);
+
+            // execute the update on the database
+            command.ExecuteNonQuery();
+
+            //close the connection
+            Connection.Close();
         }
 
+        // delete
         public void Delete(string id)
         {
-            
+            // connect to the database
+            Connection.Open();
+
+            // build the SQL query command
+            var subjectID = id;
+
+            var command = Connection.CreateCommand();
+            command.CommandText = @"
+                    DELETE FROM Subject
+                    WHERE SubjectID = @a
+            ";
+            command.Parameters.AddWithValue("a", subjectID);
+
+            // execute the command on the database
+            command.ExecuteNonQuery();
+
+            // close the connection
+            Connection.Close();
         }
     }
 }
